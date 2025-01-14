@@ -21,9 +21,7 @@ def heuristic_value(course, instructor, classroom, timeslot):
 def fitness(schedule):
     instructor_conflicts = len(schedule) - len(set((c[1], c[3]) for c in schedule))
     room_conflicts = len(schedule) - len(set((c[2], c[3]) for c in schedule))
-    total_conflicts = instructor_conflicts + room_conflicts
-    return total_conflicts if total_conflicts > 0 else 1e-6
-
+    return instructor_conflicts + room_conflicts
 
 # Construct a solution
 def construct_solution(courses, instructors, classrooms, timeslots, pheromone, alpha, beta):
@@ -47,22 +45,23 @@ def construct_solution(courses, instructors, classrooms, timeslots, pheromone, a
     return solution
 
 # Main Streamlit app
-st.title("Timetable Optimization using Ant Colony Optimization (ACO)")
+st.title("Timetable Optimization using ACO")
 
-# File upload
-students_file = st.file_uploader("Upload Students CSV", type=["csv"])
-instructors_file = st.file_uploader("Upload Instructors CSV", type=["csv"])
-courses_file = st.file_uploader("Upload Courses CSV", type=["csv"])
-classrooms_file = st.file_uploader("Upload Classrooms CSV", type=["csv"])
-timeslots_file = st.file_uploader("Upload Timeslots CSV", type=["csv"])
+with st.sidebar:
+    st.header("Upload Your CSV Files")
+    students_file = st.file_uploader("Upload Students CSV", type=["csv"], key="students")
+    instructors_file = st.file_uploader("Upload Instructors CSV", type=["csv"], key="instructors")
+    courses_file = st.file_uploader("Upload Courses CSV", type=["csv"], key="courses")
+    classrooms_file = st.file_uploader("Upload Classrooms CSV", type=["csv"], key="classrooms")
+    timeslots_file = st.file_uploader("Upload Timeslots CSV", type=["csv"], key="timeslots")
 
-# Parameter inputs
-num_ants = st.number_input("Number of Ants", min_value=1, value=10, step=1)
-num_iterations = st.number_input("Number of Iterations", min_value=1, value=100, step=1)
-alpha = st.slider("Pheromone Importance (Alpha)", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
-beta = st.slider("Heuristic Importance (Beta)", min_value=0.1, max_value=5.0, value=2.0, step=0.1)
-evaporation_rate = st.slider("Evaporation Rate", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-Q = st.number_input("Pheromone Update Constant (Q)", min_value=1, value=100, step=1)
+    st.header("ACO Parameters")
+    num_ants = st.number_input("Number of Ants", min_value=1, value=10, step=1)
+    num_iterations = st.number_input("Number of Iterations", min_value=1, value=100, step=1)
+    alpha = st.slider("Pheromone Importance (Alpha)", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
+    beta = st.slider("Heuristic Importance (Beta)", min_value=0.1, max_value=5.0, value=2.0, step=0.1)
+    evaporation_rate = st.slider("Evaporation Rate", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    Q = st.number_input("Pheromone Update Constant (Q)", min_value=1, value=100, step=1)
 
 if st.button("Run ACO"):
     if not all([students_file, instructors_file, courses_file, classrooms_file, timeslots_file]):
@@ -82,6 +81,7 @@ if st.button("Run ACO"):
         best_solution = None
         best_fitness = float('inf')
 
+        progress_bar = st.progress(0)
         for iteration in range(num_iterations):
             solutions = []
             solution_fitness = []
@@ -102,21 +102,19 @@ if st.button("Run ACO"):
             pheromone *= (1 - evaporation_rate)  # Evaporation
 
             for solution, fit in zip(solutions, solution_fitness):
-                for assignment in solution:
+                if fit > 0:  # Avoid division by zero
+                    for assignment in solution:
                         course_idx = courses.index(assignment[0])
                         instructor_idx = instructors.index(assignment[1])
                         classroom_idx = classrooms.index(assignment[2])
                         timeslot_idx = timeslots.index(assignment[3])
-        
-        # Avoid division by zero
-        if fit > 0:
-            pheromone[course_idx][instructor_idx][classroom_idx][timeslot_idx] += Q / fit
+                        pheromone[course_idx][instructor_idx][classroom_idx][timeslot_idx] += Q / fit
 
+            st.text(f"Iteration {iteration + 1}: Best Fitness = {best_fitness}")
+            progress_bar.progress((iteration + 1) / num_iterations)
 
         # Display results
         st.success(f"Optimal Fitness Value: {best_fitness}")
         st.subheader("Optimal Timetable:")
         timetable_df = pd.DataFrame(best_solution, columns=["Course", "Instructor", "Classroom", "Timeslot"])
         st.dataframe(timetable_df)
-        st.write(f"Iteration: {iteration}, Best Fitness: {best_fitness}, Current Fit: {fit}")
-
