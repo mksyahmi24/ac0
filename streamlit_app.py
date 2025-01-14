@@ -103,13 +103,15 @@ if st.button("Run ACO"):
 
             for solution, fit in zip(solutions, solution_fitness):
                 for assignment in solution:
-                    course_idx = courses.index(assignment[0])
-                    instructor_idx = instructors.index(assignment[1])
-                    classroom_idx = classrooms.index(assignment[2])
-                    timeslot_idx = timeslots.index(assignment[3])
+                        course_idx = courses.index(assignment[0])
+                        instructor_idx = instructors.index(assignment[1])
+                        classroom_idx = classrooms.index(assignment[2])
+                        timeslot_idx = timeslots.index(assignment[3])
+        
+        # Avoid division by zero
+        if fit > 0:
+            pheromone[course_idx][instructor_idx][classroom_idx][timeslot_idx] += Q / fit
 
-                    if fit > 0:
-                    pheromone[course_idx][instructor_idx][classroom_idx][timeslot_idx] += Q / fit
 
         # Display results
         st.success(f"Optimal Fitness Value: {best_fitness}")
