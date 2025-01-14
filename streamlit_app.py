@@ -21,7 +21,9 @@ def heuristic_value(course, instructor, classroom, timeslot):
 def fitness(schedule):
     instructor_conflicts = len(schedule) - len(set((c[1], c[3]) for c in schedule))
     room_conflicts = len(schedule) - len(set((c[2], c[3]) for c in schedule))
-    return instructor_conflicts + room_conflicts
+    total_conflicts = instructor_conflicts + room_conflicts
+    return total_conflicts if total_conflicts > 0 else 1e-6
+
 
 # Construct a solution
 def construct_solution(courses, instructors, classrooms, timeslots, pheromone, alpha, beta):
@@ -105,6 +107,8 @@ if st.button("Run ACO"):
                     instructor_idx = instructors.index(assignment[1])
                     classroom_idx = classrooms.index(assignment[2])
                     timeslot_idx = timeslots.index(assignment[3])
+
+                    if fit > 0:
                     pheromone[course_idx][instructor_idx][classroom_idx][timeslot_idx] += Q / fit
 
         # Display results
@@ -112,3 +116,5 @@ if st.button("Run ACO"):
         st.subheader("Optimal Timetable:")
         timetable_df = pd.DataFrame(best_solution, columns=["Course", "Instructor", "Classroom", "Timeslot"])
         st.dataframe(timetable_df)
+        st.write(f"Iteration: {iteration}, Best Fitness: {best_fitness}, Current Fit: {fit}")
+
