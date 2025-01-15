@@ -56,12 +56,12 @@ with st.sidebar:
     timeslots_file = st.file_uploader("Upload Timeslots CSV", type=["csv"], key="timeslots")
 
     st.header("ACO Parameters")
-    num_ants = st.number_input("Number of Ants", min_value=1, value=10, step=1)
-    num_iterations = st.number_input("Number of Iterations", min_value=1, value=100, step=1)
+    num_ants = st.number_input("Number of Ants", min_value=1, value=5, step=1)  # Reduced number of ants
+    num_iterations = st.number_input("Number of Iterations", min_value=1, value=10, step=1)  # Reduced number of iterations
     alpha = st.slider("Pheromone Importance (Alpha)", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
     beta = st.slider("Heuristic Importance (Beta)", min_value=0.1, max_value=5.0, value=2.0, step=0.1)
     evaporation_rate = st.slider("Evaporation Rate", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    Q = st.number_input("Pheromone Update Constant (Q)", min_value=1, value=100, step=1)
+    Q = st.number_input("Pheromone Update Constant (Q)", min_value=1, value=20, step=1)  # Lower Q for faster computation
 
 if st.button("Run ACO"):
     if not all([students_file, instructors_file, courses_file, classrooms_file, timeslots_file]):
@@ -70,9 +70,9 @@ if st.button("Run ACO"):
         # Load data
         students = load_data(students_file)
         instructors = load_data(instructors_file)
-        courses = load_data(courses_file)
-        classrooms = load_data(classrooms_file)
-        timeslots = load_data(timeslots_file)
+        courses = load_data(courses_file)[:10]  # Limit problem size
+        classrooms = load_data(classrooms_file)[:3]
+        timeslots = load_data(timeslots_file)[:4]
 
         # Initialize pheromone matrix
         pheromone = np.ones((len(courses), len(instructors), len(classrooms), len(timeslots)))
